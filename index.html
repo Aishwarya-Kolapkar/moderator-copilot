@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1074,7 +1074,7 @@
 
     // --- APPLICATION ROOT COMPONENT ---
     function App() {
-      const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+      const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
       const [fontSizeMode, setFontSizeMode] = useState(() => localStorage.getItem('fontSizeMode') || 'standard');
       const [projects, setProjects] = useState(() => {
         const saved = localStorage.getItem('projects');
@@ -2068,6 +2068,15 @@
           parkedTopics: [...prev.parkedTopics, { text: topicText, resolved: false, id: generateId() }]
         }));
         showToast(`Topic Parked: "${topicText.substring(0, 25)}${topicText.length > 25 ? '...' : ''}"`, "success");
+      };
+
+      const addSessionNote = (noteText, questionContext) => {
+        if (!noteText.trim()) return;
+        setSessionState(prev => ({
+          ...prev,
+          sessionNotes: [...(prev.sessionNotes || []), { text: noteText, questionContext, id: 'note_' + generateId() }]
+        }));
+        showToast("Session note added", "success");
       };
 
       const toggleParkedTopic = (id) => {
@@ -4185,6 +4194,65 @@
                         )}
                       </div>
 
+                      {/* SESSION NOTES BOX */}
+                      <div className={`border-t pt-4 mt-4 select-none no-select ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`}>
+                        <h3 className={`text-xs font-extrabold uppercase tracking-wider mb-2 select-none ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>Session Notes</h3>
+                        <form 
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const input = e.target.elements.noteInput;
+                            if (!input.value.trim()) return;
+                            
+                            // Get active question details to stamp onto the note
+                            const currentSec = activeProject.sections[sessionState.currentSectionIndex];
+                            const currentQ = currentSec?.questions?.[sessionState.currentQuestionIndex];
+                            const qText = currentQ ? currentQ.text : 'General Discussion';
+
+                            addSessionNote(input.value, qText);
+                            input.value = '';
+                          }}
+                          className="flex gap-2"
+                        >
+                          <input 
+                            name="noteInput"
+                            type="text" 
+                            className={`flex-1 text-xs px-3 py-2 rounded-lg placeholder-slate-450 focus:outline-none focus:border-brand-500 ${
+                              theme === 'dark' 
+                                ? 'bg-slate-955 border-slate-800 text-white placeholder-slate-600' 
+                                : 'bg-white border-slate-250 text-slate-800 placeholder-slate-400'
+                            }`}
+                            placeholder="Type observation or quote..."
+                            autoComplete="off"
+                          />
+                          <button 
+                            type="submit"
+                            className="px-3.5 py-2 bg-brand-700 hover:bg-brand-600 rounded-lg text-xs font-bold text-white transition-colors cursor-pointer"
+                          >
+                            Save
+                          </button>
+                        </form>
+
+                        {sessionState.sessionNotes && sessionState.sessionNotes.length > 0 && (
+                          <div className="mt-4 max-h-28 overflow-y-auto space-y-1.5 pr-1 select-text">
+                            {sessionState.sessionNotes.map(note => (
+                              <div 
+                                key={note.id} 
+                                className={`text-[10px] flex flex-col gap-0.5 p-2 rounded border ${
+                                  theme === 'dark' 
+                                    ? 'text-slate-400 bg-slate-955/45 border-slate-900' 
+                                    : 'text-slate-650 bg-white border-slate-200 shadow-sm'
+                                }`}
+                              >
+                                <span className="font-extrabold text-[8px] uppercase tracking-wider text-slate-400 select-none">
+                                  During: {note.questionContext.substring(0, 45)}{note.questionContext.length > 45 ? '...' : ''}
+                                </span>
+                                <span className="line-clamp-2 leading-snug">{note.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
                     </div>
 
                   </div>
@@ -4285,6 +4353,40 @@
                 )}
               </div>
 
+              {/* Captured In-Session Notes */}
+              <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-slate-800 dark:text-slate-105">
+                  <span>📝</span> Captured In-Session Notes ({sessionState.sessionNotes?.length || 0})
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 font-semibold select-none">
+                  Notes captured during specific questions in the presentation slides run.
+                </p>
+
+                {(!sessionState.sessionNotes || sessionState.sessionNotes.length === 0) ? (
+                  <div className="text-slate-400 text-xs italic p-4 text-center rounded-lg border border-dashed border-slate-200 dark:border-slate-800 select-none">
+                    No notes were captured during the session.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {sessionState.sessionNotes.map((note, idx) => (
+                      <div 
+                        key={note.id} 
+                        className={`p-3.5 border rounded-xl flex flex-col gap-1.5 ${
+                          theme === 'dark' 
+                            ? 'bg-slate-955/35 border-slate-800' 
+                            : 'bg-slate-50/50 border-slate-200 shadow-sm'
+                        }`}
+                      >
+                        <span className="font-bold text-[9px] uppercase tracking-wider text-brand-600 dark:text-indigo-400 select-none">
+                          Question Context: "{note.questionContext}"
+                        </span>
+                        <p className="text-xs text-slate-700 dark:text-slate-200 font-medium leading-relaxed select-text">{note.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Notes Box */}
               <div className="flex flex-col gap-2 select-text">
                 <label className="font-bold text-sm text-slate-700 dark:text-slate-300">Session Notes & Summary</label>
@@ -4312,7 +4414,8 @@
                       elapsedTimes: sessionState.elapsedTimes,
                       endedEarlyReason: sessionState.endedEarlyReason,
                       unfinishedQuestions: sessionState.unfinishedQuestions,
-                      notes: wrapUpNotes
+                      notes: wrapUpNotes,
+                      sessionNotes: sessionState.sessionNotes
                     };
                     const dataStr = JSON.stringify(sessionLog, null, 2);
                     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -4451,6 +4554,25 @@
                       </div>
                     </div>
                   )}
+
+                  {/* Captured In-Session Notes */}
+                  <div>
+                    <h4 className="text-xs uppercase font-extrabold tracking-wider text-slate-400 mb-2">📝 Captured In-Session Notes:</h4>
+                    {(!selectedReport.sessionNotes || selectedReport.sessionNotes.length === 0) ? (
+                      <div className="text-xs text-slate-455 italic">No notes were captured during the session.</div>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {selectedReport.sessionNotes.map((note, i) => (
+                          <div key={i} className="p-3 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl text-xs flex flex-col gap-1">
+                            <span className="font-extrabold text-[8px] uppercase tracking-wider text-brand-600 dark:text-indigo-400 select-none">
+                              During: "{note.questionContext}"
+                            </span>
+                            <div className="text-slate-705 dark:text-slate-200">{note.text}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Session notes summary */}
                   <div>
