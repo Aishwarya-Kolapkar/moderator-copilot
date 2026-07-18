@@ -11,12 +11,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Offline Local Libraries -->
-  <script src="lib/react.production.min.js"></script>
-  <script src="lib/react-dom.production.min.js"></script>
-  <script src="lib/babel.min.js"></script>
-  <script src="lib/tailwind.js"></script>
-  <script src="lib/mammoth.browser.min.js"></script>
-  <script src="lib/pdf.min.js"></script>
+  <script src="react.production.min.js"></script>
+  <script src="react-dom.production.min.js"></script>
+  <script src="babel.min.js"></script>
+  <script src="tailwind.js"></script>
+  <script src="mammoth.browser.min.js"></script>
+  <script src="pdf.min.js"></script>
 
   <!-- Tailwind Theme Configuration -->
   <script>
@@ -212,7 +212,7 @@
     const { useState, useEffect, useRef, useMemo } = React;
 
     if (window.pdfjsLib) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
     }
 
     function generateId() {
